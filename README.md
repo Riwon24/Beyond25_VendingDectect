@@ -1,1 +1,1 @@
-# Beyond25_VendingDectect
+# Beyond25_VendingDetect
