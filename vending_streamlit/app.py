@@ -1,26 +1,43 @@
 # A,B단계에서 가져올 부분
 from utils import preprocess_image, run_inference
-from visualize import extract_detected_items, draw_boxes
+from visualize import yolov8_postprocess, extract_detected_items, draw_boxes
 
 import streamlit as st
 from PIL import Image
-import pandas as pd
 import numpy as np
-import io
+import cv2
 
-# 사진 업로드 하는 화면 설정
-st.title("Upload Image!")
+# 모델 관련 불러오기
+import onnxruntime as ort
+session = ort.InferenceSession("best.onnx")
+
+# ---제목 UI 설정
+st.title("Welcome to Vending Item Detector!")
 st.text('')
 
-# 파일 업로드
-uploaded_file = st.file_uploader("이미지를 업로드하세요", type=["jpg", "png"])
+# 파일 업로드(파일내용 자체가 바이트로 streamlit안에 저장)
+uploaded_file = st.file_uploader("Upload an image for item detection using an ONNX model of YOLOv8", type=["jpg", "png"])
 
+# ---파일이 입력되었을 때
 if uploaded_file:
-    img = Image.open(uploaded_file)
-    input_tensor = preprocess_image(img) #A; 이미지를 입력텐서로 변환
+
+    # 바이트로 읽은 파일을 numpy 배열로 디코딩(cv2가 읽을 수 있게)
+    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
+    input_tensor, original_img= preprocess_image(img) #A에서 변환된 입력텐서랑 원본이미지 둘 다 받아옴(둘다 안받아오면 오류)
     output = run_inference(session, input_tensor) #A; 모델 추론 실행 함수
-    detected_items = extract_detected_items(output) #B; 결과에서 품목 추출
-    result_img = draw_boxes(np.array(img), output) #B; 이미지 위에 박스그릠
+    boxes = yolov8_postprocess(output)
+
+    with open("classes.txt", "r") as f:
+        class_names = [line.strip() for line in f.readlines()] # classes.txt에서 클래스 읽어옴
+
+    detected_items = extract_detected_items(boxes, class_names) #B; 결과에서 품목 추출
+    result_img = draw_boxes(img, boxes, output) #B; 이미지 위에 박스그릠
 
     st.image(result_img, caption="탐지 결과")
     st.write("탐지된 품목:", detected_items)
+
+    # 디버그
+    st.write('모델 입력 텐서 이름: ' ,session.get_inputs()[0].name)
+    st.write("후처리 결과 박스 수:", len(boxes))
