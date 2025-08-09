@@ -1,4 +1,4 @@
-#Beyond-SummerProject-Vending Item Detector
+# Beyond-SummerProject-Vending Item Detector
 2025 Beyond 여름 프로젝트-자판기 물품 탐지기
 
 ## 프로젝트 구조
