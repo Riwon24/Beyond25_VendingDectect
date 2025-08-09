@@ -27,7 +27,7 @@ def uploaded(uploaded_file, session):
         class_names = [line.strip() for line in f.readlines()]  # classes.txt에서 클래스 읽어옴
 
     detected_items = extract_detected_items(boxes, class_names)  # B; 결과에서 품목 추출
-    result_img = draw_boxes(img, boxes, output)  # B; 이미지 위에 박스그릠
+    result_img = draw_boxes(img, boxes, classes_names)  # B; 이미지 위에 박스그릠
 
     return detected_items, result_img, boxes
 
