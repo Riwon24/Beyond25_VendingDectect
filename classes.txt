@@ -1,0 +1,6 @@
+water_bottle
+coffee
+snack
+juice
+fruit
+yogurt
